@@ -54,7 +54,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="author" content="nst" />
 
-    <link href="/bootstrap3/dist/css/bootstrap.css" rel="stylesheet" />
+  <!-- <link href="/bootstrap3/dist/css/bootstrap.css" rel="stylesheet" /> -->
+  <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -63,7 +64,7 @@
     <![endif]-->
 
 
-    <script src="/socket.io/socket.io.js"></script>
+   <script src="/socket.io/socket.io.js"></script> 
     <!--[if (IE 6)|(IE 7)|(IE 8)]><script type="text/javascript" src="http://ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js"></script><![endif]-->
 
     <title >Display VistA RPC</title>
@@ -138,9 +139,8 @@
 						</div>
 					
 						<div >
-							<button type="submit" class="btn btn-primary" id="btnShowList" 		
-									data-loading-text="Searching..."
-									onClick="SelectionSubmitted(event)">Show Selected RPC(s)
+							<button type="submit" class="btn btn-primary" id="btnShowRPCList" 											
+									data-loading-text="Searching...">Search for RPC(s)									
 							</button>
 						</div>
 				
@@ -237,8 +237,12 @@
     <!-- Bootstrap core JavaScript
      ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="/bootstrap3/assets/js/jquery.js"></script>
-    <script src="/bootstrap3/dist/js/bootstrap.js"></script>
+	
+  <!--   <script src="/bootstrap3/assets/js/jquery.js"></script>
+	<script src="/bootstrap3/dist/js/bootstrap.js"></script> -->
+	
+	<script type="text/javascript" src="//code.jquery.com/jquery-latest.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 
     <script src="/ewdLite/EWD.js"></script>
     

@@ -17,15 +17,14 @@
 	limitations under the License.
 */
 
-var labelShowRPC = "Show Selected RPC(s)";
-var labelSearching = "Searching...";
 var currentRPC;
 var sessionDUZ;
 var sessionDivision;		// User division
 var sessionRPCContext;
 
-var SelectionSubmitted = function(event) {
-		document.getElementById("btnShowList").innerHTML = labelSearching;
+$('#btnShowRPCList').click(function(e) {	
+		
+		$(this).button('loading');
 		document.getElementById("RoutineDetailPane").style.display = 'none';
 		document.getElementById("RPCDetailPane").style.display = 'none';
 		
@@ -41,9 +40,10 @@ var SelectionSubmitted = function(event) {
 				routine : document.getElementById('routine').value
 			}
 		});
-	};
+	});
 	
-var displayRPCDetails = function(ien) {
+var displayRPCDetails = function(obj) {
+		var ien = obj.attr('data-rpc-ien');
 		EWD.sockets.sendMessage({
 			type: "getRPCDetails",
 			params: {
@@ -118,9 +118,9 @@ var closePane = function(name) {
 		if (name=== "RoutineDetailPane") document.getElementById("RPCDetailPane").style.display = 'inline';
 	};
 
-var onAddListItem = function (handle) {
-	var fieldId = handle.attr('data-field-id');
-	var dataContentParent = handle.attr('data-content-parent');
+var onAddListItem = function (obj) {
+	var fieldId = obj.attr('data-field-id');
+	var dataContentParent = obj.attr('data-content-parent');
 	
 	var newSubscript = $('#'+fieldId+'-subscript').val();		// new subscript to add
 	
@@ -133,6 +133,7 @@ var onAddListItem = function (handle) {
 
 	param.append(newRow);
 	$('[data-toggle="popover"]').popover({trigger: 'focus','placement': 'auto'});		// initialize pop-over
+	$('[data-toggle="tooltip"]').tooltip({'placement': 'auto'});
 }
 
 var onDeleteListItem = function (btn) {
@@ -168,17 +169,19 @@ var renderListItem = function (fieldId, dataContentParent) {
 							.attr('data-toggle','popover')	
 							.attr('data-content',dataContentParent));							
 	
-	var inputDel = $('<div></div>')
-					.addClass('col-xs-2')
-					.append($('<button></button>')
-							.addClass('form-control')
+	var btnDel = $('<button></button>')
 							.addClass('btn btn-danger')
 							.attr('data-id', fieldId)
+							.attr('data-toggle','tooltip')
+							.attr('data-original-title','Delete item')
 							.attr('type', 'button')
-							.attr('title', 'Delete record')
-							.attr('onClick','onDeleteListItem($(this))')
-							.text('Delete'));						
-	
+							.attr('onClick','onDeleteListItem($(this))')							
+							.append($('<span></span>').addClass('glyphicon glyphicon-remove'));
+							
+	var inputDel = $('<div></div>')
+					.addClass('col-xs-1')
+					.append(btnDel);						
+		
 	newRow.append(inputSubscript).append(inputValue).append(inputDel);
 		
 	return newRow;
@@ -229,13 +232,14 @@ var testRPC = function(event) {
 						.attr('for', fieldId + '-list')
 						.text(rpcParm.name));
 						
-			param.append(' ').append($('<button type="button" />')			// Add button
+			param.append(' ').append($('<button type="button" />')			// Add item button
 						.attr('data-field-id', fieldId)
 						.attr('data-content-parent', rpcParm.description)
 						.attr('onClick','onAddListItem($(this))')
 						.addClass('btn btn-default')
-						.addClass('item-add')							
-						.text('Add record'));
+						.addClass('item-add')						
+						.text('Add item'));
+						
 											
 			param.append( $('<ul></ul>')
 						.addClass('list-group')
@@ -364,7 +368,7 @@ EWD.application = {  name: 'nstVistARPCViewer' };
 EWD.onSocketMessage = function(messageObj) {
   
  	if (messageObj.type === 'selectedRPCList') {	// process selected RPCs and create a list
-		var text = '';
+		var html = '';
 		var rpcs = messageObj.params;
 		if (document.getElementById('alphaSort').checked) {
 			rpcs = rpcs.sort(function(a, b){
@@ -372,21 +376,31 @@ EWD.onSocketMessage = function(messageObj) {
 							});
 		};
 		
-		var z = ""; // new line or comma
+		var delimiter = ""; // new line or comma
 		var singleLine =  document.getElementById('singleLine').checked;
 		var displayIEN =  document.getElementById('showIEN').checked;
+		var text;
+		var html =$('<div></div>');
+		for (var rpc in rpcs) {			
+   		    
+			text = displayIEN ? rpcs[rpc].ien + ' ' : '';
+			text += rpcs[rpc].name;
+			
+			html.append(delimiter);
+			html.append($('<a></a>')
+					.addClass('btn-link')
+					.attr('data-rpc-ien',rpcs[rpc].ien)
+					.text(text));
 		
-		for (var rpc in rpcs) {
-	
-			text += z + '<a href=\"javascript:displayRPCDetails('+rpcs[rpc].ien+')\">'
-   		
-			if (displayIEN) text +=  + rpcs[rpc].ien + ' '; // + $C(9);
-			text += rpcs[rpc].name + "</a>";
-			z = (singleLine) ? ", " : "<br>";
+			delimiter = (singleLine) ? ", " : "<br>";
 		};
 		
-		document.getElementById('rpcList').innerHTML = text;
-		document.getElementById("btnShowList").innerHTML = labelShowRPC;
+		$('#btnShowRPCList').button('reset');
+		$('#rpcList').html(html);
+		
+		$('#rpcList a').click(function (e) {
+								displayRPCDetails($(this));
+							});
 	};
 	
 	if (messageObj.type === 'getRPCDetails') {		// process and display RPC details
@@ -435,12 +449,3 @@ EWD.onSocketsReady = function() {
   EWD.application.framework = 'bootstrap';
 
 };
-
-
-$(document).ready(function() {
-  EWD.isReady();
-});
-
-
-
-
