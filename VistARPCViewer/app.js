@@ -22,6 +22,114 @@ var sessionDUZ;
 var sessionDivision;		// User division
 var sessionRPCContext;
 
+EWD.application = {  
+	name: 'nstVistARPCViewer',
+
+	onStartup: function() {
+
+	},
+
+	 onPageSwap: {
+	 },
+
+	 onFragment: {
+	},
+	   
+	onMessage: {
+	
+		'selectedRPCList': function(messageObj) {	// process selected RPCs and create a list
+			var html = '';
+			var rpcs = messageObj.params;
+			if (document.getElementById('alphaSort').checked) {
+				rpcs = rpcs.sort(function(a, b){
+								return a.name > b.name;
+								});
+			};
+			
+			var delimiter = ""; // new line or comma
+			var singleLine =  document.getElementById('singleLine').checked;
+			var displayIEN =  document.getElementById('showIEN').checked;
+			var text;
+			var html =$('<div></div>');
+			for (var rpc in rpcs) {			
+				
+				text = displayIEN ? rpcs[rpc].ien + ' ' : '';
+				text += rpcs[rpc].name;
+				
+				html.append(delimiter);
+				html.append($('<a></a>')
+						.addClass('btn-link')
+						.attr('data-rpc-ien',rpcs[rpc].ien)
+						.text(text));
+			
+				delimiter = (singleLine) ? ", " : "<br>";
+			};
+			
+			$('#btnShowRPCList').button('reset');
+			$('#rpcList').html(html);
+			
+			$('#rpcList a').click(function (e) {
+									displayRPCDetails($(this));
+								});
+		},
+		
+		'getRPCDetails' : function(messageObj) {		// process and display RPC details
+				// format the RPC detail html
+				currentRPC = messageObj.message;
+				document.getElementById('RPCDetailName').innerHTML = currentRPC.name;
+				document.getElementById('RPCDetailContent').innerHTML = renderRPCDetails(currentRPC);	
+				document.getElementById("RoutineDetailPane").style.display = 'none';
+				document.getElementById("RPCDetailPane").style.display = 'inline';			
+		},
+		
+		'getRoutine' : function(messageObj) {	// process and display a routine
+				// format the routine detail html			
+				var routine = messageObj.message;
+				var text = htmlEscape(routine.routine.join('\n'));
+				var searchTag = '\n' + routine.routineTag + '(';
+				
+				text = text.replace(searchTag, '<a name = "'+routine.routineTag+'">' + searchTag +'</a>');
+				document.getElementById('RoutineDetailName').innerHTML = routine.routineName;
+				document.getElementById('RoutineDetailContent').innerHTML = "<pre>" + text + "</pre>";
+				closePane("RPCDetailPane");
+				document.getElementById("RoutineDetailPane").style.display = 'inline';
+				window.location.hash = routine.routineTag;	// jump to the routine tag
+		},
+
+		'executeRPC' : function(messageObj) {		// process the RPC result
+			var result = messageObj.message;
+			var str;
+			if (!result.success) {
+				str = 'Error : ' + result.message;
+			} else {
+				if (result.result.type === "ARRAY" || result.result.type === "GLOBAL ARRAY" ) {
+					str = JSON.stringify(result.result.value, null, '\t')
+				}
+				else {
+					str = result.result.value;
+				};
+			};
+			document.getElementById("RPCTesterResult").innerHTML = '<pre>' + str + '</pre>';
+		}
+	}
+ };
+
+EWD.onSocketsReady = function() {
+
+  EWD.application.framework = 'bootstrap';
+
+};
+
+EWD.onSocketMessage = function(messageObj) {
+
+  if (EWD.application.onMessage) {
+    if (EWD.application.onMessage[messageObj.type]) EWD.application.onMessage[messageObj.type](messageObj);
+  } 
+
+  if (EWD.application.messageHandlers) EWD.application.messageHandlers(messageObj);
+
+};
+
 $('#btnShowRPCList').click(function(e) {	
 		
 		$(this).button('loading');
@@ -361,91 +469,4 @@ var htmlEscape = function(str) {
             .replace(/'/g, '&#39;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
-}
-
-EWD.application = {  name: 'nstVistARPCViewer' };
- 
-EWD.onSocketMessage = function(messageObj) {
-  
- 	if (messageObj.type === 'selectedRPCList') {	// process selected RPCs and create a list
-		var html = '';
-		var rpcs = messageObj.params;
-		if (document.getElementById('alphaSort').checked) {
-			rpcs = rpcs.sort(function(a, b){
-							return a.name > b.name;
-							});
-		};
-		
-		var delimiter = ""; // new line or comma
-		var singleLine =  document.getElementById('singleLine').checked;
-		var displayIEN =  document.getElementById('showIEN').checked;
-		var text;
-		var html =$('<div></div>');
-		for (var rpc in rpcs) {			
-   		    
-			text = displayIEN ? rpcs[rpc].ien + ' ' : '';
-			text += rpcs[rpc].name;
-			
-			html.append(delimiter);
-			html.append($('<a></a>')
-					.addClass('btn-link')
-					.attr('data-rpc-ien',rpcs[rpc].ien)
-					.text(text));
-		
-			delimiter = (singleLine) ? ", " : "<br>";
-		};
-		
-		$('#btnShowRPCList').button('reset');
-		$('#rpcList').html(html);
-		
-		$('#rpcList a').click(function (e) {
-								displayRPCDetails($(this));
-							});
-	};
-	
-	if (messageObj.type === 'getRPCDetails') {		// process and display RPC details
-			// format the RPC detail html
-			currentRPC = messageObj.message;
-			document.getElementById('RPCDetailName').innerHTML = currentRPC.name;
-			document.getElementById('RPCDetailContent').innerHTML = renderRPCDetails(currentRPC);	
-			document.getElementById("RoutineDetailPane").style.display = 'none';
-			document.getElementById("RPCDetailPane").style.display = 'inline';			
-	};
-	
-	if (messageObj.type === 'getRoutine') {		// process and display a routine
-			// format the routine detail html			
-			var routine = messageObj.message;
-			var text = htmlEscape(routine.routine.join('\n'));
-			var searchTag = '\n' + routine.routineTag + '(';
-			
-			text = text.replace(searchTag, '<a name = "'+routine.routineTag+'">' + searchTag +'</a>');
-			document.getElementById('RoutineDetailName').innerHTML = routine.routineName;
-			document.getElementById('RoutineDetailContent').innerHTML = "<pre>" + text + "</pre>";
-			closePane("RPCDetailPane");
-			document.getElementById("RoutineDetailPane").style.display = 'inline';
-			window.location.hash = routine.routineTag;	// jump to the routine tag
-	};
-
-	if (messageObj.type === 'executeRPC') {		// process the RPC result
-		var result = messageObj.message;
-		var str;
-		if (!result.success) {
-			str = 'Error : ' + result.message;
-		} else {
-			if (result.result.type === "ARRAY" || result.result.type === "GLOBAL ARRAY" ) {
-				str = JSON.stringify(result.result.value, null, '\t')
-			}
-			else {
-				str = result.result.value;
-			};
-		};
-		document.getElementById("RPCTesterResult").innerHTML = '<pre>' + str + '</pre>';
-	};
-
-};
-
-EWD.onSocketsReady = function() {
-
-  EWD.application.framework = 'bootstrap';
-
 };
