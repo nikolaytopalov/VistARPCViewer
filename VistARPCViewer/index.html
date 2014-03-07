@@ -48,19 +48,24 @@
     </style>
 
   <head>
+  
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="author" content="nst" />
 
-    <meta name="apple-touch-fullscreen" content="yes" />
-    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="author" content="nst" />
-
-  <!-- <link href="/bootstrap3/dist/css/bootstrap.css" rel="stylesheet" /> -->
-  <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+<!--   <link href="/bootstrap3/dist/css/bootstrap.css" rel="stylesheet" /> -->
+	<link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
-      <script src="/bootstrap-3.0.0/assets/js/html5shiv.js"></script>
-      <script src="/bootstrap-3.0.0/assets/js/respond.min.js"></script>
+      <script src="/respond/html5shiv.js"></script>
+      <script src="/respond/respond.js"></script>
     <![endif]-->
 
 
@@ -72,173 +77,105 @@
   </head>
 
   <body>
-       
+    
 	<!-- Main body -->
     <div class="container-fluid">
 		<div class="row-fluid " >
 		
-		<div class="col-md-4 id="leftPane"> 
-			<div class="panel panel-primary ">
+			<div class="col-md-4 id="leftPane"> 
+				<div class="panel panel-primary ">
+						
+					<div class="panel-heading">
+						<h3 class="panel-title">Select VistA Remote Procedure Call</h3>
+					</div>
 					
-				<div class="panel-heading">
-					<h3 class="panel-title">Select VistA Remote Procedure Call</h3>
-				</div>
-				
-				<div class="panel-body ">						
-					<form class="form-inline" role="form" id="formSelection">			
-						<div class="row">
-							<div class="form-group">
-								<label for="ienFrom">IEN between</label>					
-								<input type="text" class="form-control" id="ienFrom" placeholder="from"/>
-								
-								<label for="ienTo">and</label>
-								<input type="text"  class="form-control" id="ienTo" placeholder="to"/>	
-							</div>
-						</div>
-						
-						<div class="row">
-							<div class="form-group">
-								<label for="nameStart">Name starts with</label>
-								<input type="text"  class="form-control" id="nameStart" placeholder="starts"/>
-							</div>
-						</div>
-						
-						<div class="row">
-							<div class="form-group ">
-								<label for="nameContain">Name contains</label>
-								<input type="text" class="form-control" id="nameContain" placeholder="contains"/>
-							</div>
-						</div>
-						
-						<div class="row">
-							<div class="form-group ">								
-								<label for="routine" >Routine starts with</label>							
-								<input type="text"  class="form-control" id="routine" placeholder="routine"/>
-							</div>
-						</div>
-					
-						<div class="row">		
-							<div class="checkbox">
-								<label  for="alphaSort">
-									<input type="checkbox" id="alphaSort" /> Alpha Sort
-								</label>
+					<div class="panel-body ">						
+						<form class="form-inline" role="form" id="formSelection">			
+							<div class="row">
+								<div class="form-group">
+									<label for="ienFrom">IEN between</label>					
+									<input type="text" class="form-control" id="ienFrom" placeholder="from"/>
+									
+									<label for="ienTo">and</label>
+									<input type="text"  class="form-control" id="ienTo" placeholder="to"/>	
+								</div>
 							</div>
 							
-							<div class="checkbox">
-								<label  for="singleLine">
-									<input type="checkbox" id="singleLine" /> Output in Single Line
-								</label>
+							<div class="row">
+								<div class="form-group">
+									<label for="nameStart">Name starts with</label>
+									<input type="text"  class="form-control" id="nameStart" placeholder="starts"/>
+								</div>
 							</div>
-								
-							<div class="checkbox">						
-									
-								<label for="showIEN"> 
-									<input type="checkbox" id="showIEN" /> Show RPC IEN 
-								</label>									 
+							
+							<div class="row">
+								<div class="form-group ">
+									<label for="nameContain">Name contains</label>
+									<input type="text" class="form-control" id="nameContain" placeholder="contains"/>
+								</div>
 							</div>
-						</div>
-					
-						<div >
-							<button type="submit" class="btn btn-primary" id="btnShowRPCList" 											
-									data-loading-text="Searching...">Search for RPC(s)									
-							</button>
-						</div>
-				
-					</form>
-										
-					<div class="scrollable-list" id="rpcList">
-					</div>
-													
-				</div>
-			</div>	
-		
-		</div> <!-- left pane -->
-		
-		<div class="col-md-8 scrollable-details" id="RPCDetailPane" style="display: none">
-		
-			<div class="panel panel-primary">
-				
-				<div class="panel-heading">
-					<button  class="panel-title btn btn-link" id="RPCDetailName" onClick=testRPC(event) ></button>
-								
-				</div>
-				<div class="panel-body" id="RPCDetailContent">
-					
-				</div>
-			</div>	
-		</div>
-		
-		
-		<div class="col-md-8 scrollable-details" id="RoutineDetailPane" style="display: none">
-			<div class="panel panel-primary">				
-				<div class="panel-heading">
-					<a class="close" href="javascript:closePane('RoutineDetailPane')" >X</a>
-					<h1 class="panel-title" id="RoutineDetailName"></h1>					
-				</div>
-				<div class="scroll" id="RoutineDetailContent">
-								
-				</div>
-			</div>	
-		</div>	
-		
-	<div class="modal fade" id="RPCTestForm"  role="dialog">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header" >
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-			<h4 class="modal-title" id="RPCTesterFormTitle" >RPC Tester</h4>
-          </div>
-          <div class="modal-body" id="RPCTesterFormBody">
-            <form role="form" class="form-horizontal" id="RPCTester">
-				<div class="row">
-					<div class="col-sm-3 form-group">
-						<label class="sr-only" for="DUZ">DUZ</label>
-						<input type="text" class="form-control" id="DUZ" 
-								placeholder="Enter DUZ" data-toggle="popover" data-content="User DUZ"/>
-					</div>
-					<div class="col-sm-3 form-group">
-						<label class="sr-only" for="Division">User Division</label>
-						<input type="text" class="form-control" id="Division" 
-								placeholder="Enter Division" data-toggle="popover" data-content="User division id"/>
-					</div>
-					<div class="col-sm-6 form-group">
-						<label class="sr-only" for="RPCContextId">RPC Context</label>
-						<input type="text" class="form-control" id="RPCContextId"
-								placeholder="Enter RPC context" placeholder="Enter DUZ" 
-								data-toggle="popover" data-content="Context in which the RPC will be executed."/>
-					</div>
-				</div>
-				
-				<div  id="RPCTesterParams" > </div>
-				
-				
-				<div class="panel panel-primary">				
-					<div class="panel-heading">
+							
+							<div class="row">
+								<div class="form-group ">								
+									<label for="routine" >Routine starts with</label>							
+									<input type="text"  class="form-control" id="routine" placeholder="routine"/>
+								</div>
+							</div>
 						
-						<h1 class="panel-title" >Result</h1>
-												
-					</div>
-					<div id="RPCTesterResult"  class="scrollable-result"> </div>
+							<div class="row">		
+								<div class="checkbox">
+									<label  for="alphaSort">
+										<input type="checkbox" id="alphaSort" /> Alpha Sort
+									</label>
+								</div>
+								
+								<div class="checkbox">
+									<label  for="singleLine">
+										<input type="checkbox" id="singleLine" /> Output in Single Line
+									</label>
+								</div>
+									
+								<div class="checkbox">						
+										
+									<label for="showIEN"> 
+										<input type="checkbox" id="showIEN" /> Show RPC IEN 
+									</label>									 
+								</div>
+							</div>
+						
+							<div >
+								<button type="submit" class="btn btn-primary" id="btnShowRPCList" 											
+										data-loading-text="Searching...">Search for RPC(s)									
+								</button>
+							</div>
 					
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-					<button type="button" class="btn btn-primary" id="RPCExecuteBtn">Execute</button>
-				</div>
-            </form>
-            
-          </div>
-        </div>
-      </div>
-    </div>
-		
+						</form>
+											
+						<div class="scrollable-list" id="rpcList">
+						</div>
+														
+					</div>
+				</div>	
+			
+			</div> <!-- left pane -->
+
+			<div class="container" id="RPC_container"  style="display: none"> </div>
+			
+			<div class="container" id="Routine_container"  style="display: none"> </div>
+			
+			<!-- RPC Tester Form -->
+			<div class="modal fade" id="RPCTesterForm"  role="dialog">   </div>
+			
+		</div>
     </div> <!-- container -->
+				
+
 
     <!-- Bootstrap core JavaScript
      ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
 	
-  <!--   <script src="/bootstrap3/assets/js/jquery.js"></script>
+<!--     <script src="/bootstrap3/assets/js/jquery.js"></script>
 	<script src="/bootstrap3/dist/js/bootstrap.js"></script> -->
 	
 	<script type="text/javascript" src="//code.jquery.com/jquery-latest.js"></script>

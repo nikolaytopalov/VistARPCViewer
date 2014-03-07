@@ -25,62 +25,201 @@ var sessionRPCContext;
 EWD.application = {  
 	name: 'nstVistARPCViewer',
 
-	onStartup: function() {
-
+	onStartup:  function() {
+		EWD.getFragment('rpcDetail.html', 'RPC_container'); 
+		EWD.getFragment('routineDetail.html', 'Routine_container'); 
+		EWD.getFragment('rpcTesterForm.html', 'RPCTesterForm'); 
 	},
 
 	 onPageSwap: {
 	 },
 
 	 onFragment: {
-	},
-	   
-	onMessage: {
-	
-		'selectedRPCList': function(messageObj) {	// process selected RPCs and create a list
-			var html = '';
-			var rpcs = messageObj.params;
-			if (document.getElementById('alphaSort').checked) {
-				rpcs = rpcs.sort(function(a, b){
-								return a.name > b.name;
-								});
-			};
-			
-			var delimiter = ""; // new line or comma
-			var singleLine =  document.getElementById('singleLine').checked;
-			var displayIEN =  document.getElementById('showIEN').checked;
-			var text;
-			var html =$('<div></div>');
-			for (var rpc in rpcs) {			
+		 'rpcDetail.html' : function(messageObj) {
 				
-				text = displayIEN ? rpcs[rpc].ien + ' ' : '';
-				text += rpcs[rpc].name;
+				// Shows modal RPC tester form
+				$('#RPCDetailName').click(function(e) {
+					var rpcParm;
+					event.preventDefault();
+					
+					$('#RPCTesterFormTitle').text('RPC [' + currentRPC.name  + ']');
+					
+					$('#DUZ').text(sessionDUZ);
+					$('#Division').text(sessionDivision);
+					$('#RPCContextId').text(sessionRPCContext);
+					
+					var inputParams = $('<div></div>').attr('id', 'RPCTesterParams');
+							
+					for (var i in currentRPC.inputParameters)  {
+						rpcParm = currentRPC.inputParameters[i];
+						var fieldId = 'RPCInput'+ i;
+						if (rpcParm.type === undefined || rpcParm.type === 'REFERENCE' || rpcParm.type === 'LITERAL') {
+							var param = $('<div></div>').
+								attr('id','RPCInput'+ i + '-group').
+								addClass('form-group');
+							
+							var lbl = $('<label></label>').
+								attr('for', fieldId).
+								text(rpcParm.name);
+								
+							var inputField = $('<input></input>').
+											addClass('form-control').
+											attr('id', fieldId).
+											attr('name', fieldId).
+											attr('type', 'text').
+											attr('data-toggle','popover').	
+											attr('data-content', rpcParm.description).		
+											text(rpcParm.name);
+
+							param.append(lbl).append(inputField);
+						} else if (rpcParm.type === 'LIST') {
+							var param = $('<div></div>')
+										.attr('id', fieldId + '-group')
+										.attr('name', fieldId + '-group')
+										.addClass('form-group');
+												
+							param.append( $('<label></label>')
+										.attr('for', fieldId + '-list')
+										.text(rpcParm.name));
+										
+							param.append(' ').append($('<button type="button" />')			// Add item button
+										.attr('data-field-id', fieldId)
+										.attr('data-content-parent', rpcParm.description)
+										.attr('onClick','onAddListItem($(this))')
+										.addClass('btn btn-default')
+										.addClass('item-add')						
+										.text('Add item'));
+										
+															
+							param.append( $('<ul></ul>')
+										.addClass('list-group')
+										.attr('id', fieldId + '-list')
+										.attr('data-id-counter', 0)); 								
+						}
+							
+						inputParams.append(param);
+
+					}; 
+					
+					$('#RPCTesterParams').replaceWith(inputParams);
+					$('[data-toggle="popover"]').popover({trigger: 'focus','placement': 'auto'});		// initialize pop-over
+					document.getElementById('RPCTesterResult').innerHTML = '';
+					
+					$('#RPCTesterForm').modal('show');
+		
+					});	
+			},
+			
+		'routineDetail.html' : function(messageObj) {
+			
+			$('#RoutineDetailClose').click(function(e) { 
+				showPane("RPC_container");
+			});
+		
+		},
+			 
+		'rpcTesterForm.html' : function(messageObj) {
+		
+			$('#RPCExecuteBtn').click(function(e) {
+					// save DUZ and context
+					sessionDUZ = $('#DUZ').val();
+					sessionDivision = $('#Division').val();
+					sessionRPCContext =  $('#RPCContextId').val();
+					
+					var rpc = {"name": currentRPC.name,
+								"duz": sessionDUZ, 
+								"division": sessionDivision, 
+								"context": sessionRPCContext, 
+								"input": []
+								};
+					var rpcInputParam;
+					
+					e.preventDefault();
+
+					var inputValue = $('#RPCTester').serializeArray();
+					
+					for (var i in currentRPC.inputParameters) { 
+						rpcInputParam = currentRPC.inputParameters[i];
+						rpc.input[i] = {};
+						rpc.input[i].type = rpcInputParam.type;
+
+						if (rpcInputParam.type === 'LIST') {
+
+							var itemSubscript;
+							var itemValue;
+								
+							var listItems = $( '#RPCInput' + i + '-list').children();
+							rpc.input[i].value = {};
+							
+							for (var index = 0; index < listItems.length; ++index) {				
+								itemSubscript = $('#' + listItems[index].id + '-item-subscript').val();
+								itemValue = $('#' + listItems[index].id + '-item-value').val();
+								rpc.input[i].value[itemSubscript] = itemValue;
+							}
+						} 
+						else {
+							rpc.input[i].value = $('#RPCInput' + i).val();
+						};
+					};
+						
+					EWD.sockets.sendMessage({
+						type: "executeRPC",
+						params: rpc
+						});
+										
+				});
+			}
+		
+		},
+		   
+		onMessage: {
+		
+			'selectedRPCList': function(messageObj) {	// process selected RPCs and create a list
+				var html = '';
+				var rpcs = messageObj.params;
+				if (document.getElementById('alphaSort').checked) {
+					rpcs = rpcs.sort(function(a, b){
+									return a.name > b.name;
+									});
+				};
 				
-				html.append(delimiter);
-				html.append($('<a></a>')
-						.addClass('btn-link')
-						.attr('data-rpc-ien',rpcs[rpc].ien)
-						.text(text));
-			
-				delimiter = (singleLine) ? ", " : "<br>";
-			};
-			
-			$('#btnShowRPCList').button('reset');
-			$('#rpcList').html(html);
-			
-			$('#rpcList a').click(function (e) {
-									displayRPCDetails($(this));
-								});
+				var delimiter = ""; // new line or comma
+				var singleLine =  document.getElementById('singleLine').checked;
+				var displayIEN =  document.getElementById('showIEN').checked;
+				var text;
+				var html =$('<div></div>');
+				for (var rpc in rpcs) {			
+					
+					text = displayIEN ? rpcs[rpc].ien + ' ' : '';
+					text += rpcs[rpc].name;
+					
+					html.append(delimiter);
+					html.append($('<a></a>')
+							.addClass('btn-link')
+							.attr('data-rpc-ien',rpcs[rpc].ien)
+							.text(text));
+				
+					delimiter = (singleLine) ? ", " : "<br>";
+				};
+				
+				$('#btnShowRPCList').button('reset');
+				$('#rpcList').html(html);
+				
+				$('#rpcList a').click(function (e) {
+										displayRPCDetails($(this));
+									});
 		},
 		
 		'getRPCDetails' : function(messageObj) {		// process and display RPC details
 				// format the RPC detail html
 				currentRPC = messageObj.message;
+				var x =document.getElementById('RPCDetailName');
 				document.getElementById('RPCDetailName').innerHTML = currentRPC.name;
 				document.getElementById('RPCDetailContent').innerHTML = renderRPCDetails(currentRPC);	
-				document.getElementById("RoutineDetailPane").style.display = 'none';
+				showPane('RPC_container');
+/* 				document.getElementById("RoutineDetailPane").style.display = 'none';
 				document.getElementById("RPCDetailPane").style.display = 'inline';			
-		},
+ */		},
 		
 		'getRoutine' : function(messageObj) {	// process and display a routine
 				// format the routine detail html			
@@ -91,8 +230,7 @@ EWD.application = {
 				text = text.replace(searchTag, '<a name = "'+routine.routineTag+'">' + searchTag +'</a>');
 				document.getElementById('RoutineDetailName').innerHTML = routine.routineName;
 				document.getElementById('RoutineDetailContent').innerHTML = "<pre>" + text + "</pre>";
-				closePane("RPCDetailPane");
-				document.getElementById("RoutineDetailPane").style.display = 'inline';
+				showPane('Routine_container');
 				window.location.hash = routine.routineTag;	// jump to the routine tag
 		},
 
@@ -102,7 +240,7 @@ EWD.application = {
 			if (!result.success) {
 				str = 'Error : ' + result.message;
 			} else {
-				if (result.result.type === "ARRAY" || result.result.type === "GLOBAL ARRAY" ) {
+				if (result.result.type === "ARRAY" || result.result.type === "GLOBAL ARRAY" || result.result.type === "WORD PROCESSING" ) {
 					str = JSON.stringify(result.result.value, null, '\t')
 				}
 				else {
@@ -117,6 +255,7 @@ EWD.application = {
 EWD.onSocketsReady = function() {
 
   EWD.application.framework = 'bootstrap';
+  if (EWD.application.onStartup) EWD.application.onStartup();
 
 };
 
@@ -130,26 +269,6 @@ EWD.onSocketMessage = function(messageObj) {
 
 };
 
-$('#btnShowRPCList').click(function(e) {	
-		
-		$(this).button('loading');
-		document.getElementById("RoutineDetailPane").style.display = 'none';
-		document.getElementById("RPCDetailPane").style.display = 'none';
-		
-		event.preventDefault();
-				
-		EWD.sockets.sendMessage({
-			type: "processSelection",
-			params: {
-				ienFrom : document.getElementById('ienFrom').value,
-				ienTo : document.getElementById('ienTo').value,
-				nameStart : document.getElementById('nameStart').value,
-				nameContain : document.getElementById('nameContain').value,
-				routine : document.getElementById('routine').value
-			}
-		});
-	});
-	
 var displayRPCDetails = function(obj) {
 		var ien = obj.attr('data-rpc-ien');
 		EWD.sockets.sendMessage({
@@ -172,59 +291,40 @@ var displayRoutine = function(routine, tag ) {
 		
 	};
 	
-$('#RPCExecuteBtn').click(function(e) {
-	// save DUZ and context
-	sessionDUZ = $('#DUZ').val();
-	sessionDivision = $('#Division').val();
-	sessionRPCContext =  $('#RPCContextId').val();
-	
-	var rpc = {"name": currentRPC.name,
-				"duz": sessionDUZ, 
-				"division": sessionDivision, 
-				"context": sessionRPCContext, 
-				"input": []
-				};
-	var rpcInputParam;
-	
-	e.preventDefault();
-
-	var inputValue = $('#RPCTester').serializeArray();
-	
-	for (var i in currentRPC.inputParameters) { 
-		rpcInputParam = currentRPC.inputParameters[i];
-		rpc.input[i] = {};
-		rpc.input[i].type = rpcInputParam.type;
-
-		if (rpcInputParam.type === 'LIST') {
-
-			var itemSubscript;
-			var itemValue;
+$('#btnShowRPCList').click(function(e) {	
 				
-			var listItems = $( '#RPCInput' + i + '-list').children();
-			rpc.input[i].value = {};
-			
-			for (var index = 0; index < listItems.length; ++index) {				
-				itemSubscript = $('#' + listItems[index].id + '-item-subscript').val();
-				itemValue = $('#' + listItems[index].id + '-item-value').val();
-				rpc.input[i].value[itemSubscript] = itemValue;
-			}
-		} 
-		else {
-			rpc.input[i].value = $('#RPCInput' + i).val();
-		};
-	};
-    	
-	EWD.sockets.sendMessage({
-		type: "executeRPC",
-		params: rpc
-		});
+				$(this).button('loading');
+				$('#RPC_container').hide();
+				$('#Routine_container').hide(); 
+				
+				event.preventDefault();
 						
-});
-	
-var closePane = function(name) {
-		document.getElementById(name).style.display = 'none';
-		if (name=== "RoutineDetailPane") document.getElementById("RPCDetailPane").style.display = 'inline';
+				EWD.sockets.sendMessage({
+					type: "processSelection",
+					params: {
+						ienFrom : document.getElementById('ienFrom').value,
+						ienTo : document.getElementById('ienTo').value,
+						nameStart : document.getElementById('nameStart').value,
+						nameContain : document.getElementById('nameContain').value,
+						routine : document.getElementById('routine').value
+					}
+				});
+			});
+
+var closeRoutinePane = function() {
+	showPane("RPC_container");
+}
+
+// swap RPC and Routine panes			
+var showPane = function(name) {		
+	if ( name === "Routine_container") {
+		$('#RPC_container').hide();
+	} else {
+		$('#Routine_container').hide();
 	};
+	
+	$('#' + name).show();
+};
 
 var onAddListItem = function (obj) {
 	var fieldId = obj.attr('data-field-id');
@@ -294,77 +394,6 @@ var renderListItem = function (fieldId, dataContentParent) {
 		
 	return newRow;
 }	
-
-// Shows modal RPC tester form
-var testRPC = function(event) {
-	var rpcParm;
-	event.preventDefault();
-	
-	$('#RPCTesterFormTitle').text('RPC [' + currentRPC.name  + ']');
-	
-	$('#DUZ').text(sessionDUZ);
-	$('#Division').text(sessionDivision);
-	$('#RPCContextId').text(sessionRPCContext);
-	
-	var inputParams = $('<div></div>').attr('id', 'RPCTesterParams');
-			
-	for (var i in currentRPC.inputParameters)  {
-		rpcParm = currentRPC.inputParameters[i];
-		var fieldId = 'RPCInput'+ i;
-		if (rpcParm.type === undefined || rpcParm.type === 'REFERENCE' || rpcParm.type === 'LITERAL') {
-			var param = $('<div></div>').
-				attr('id','RPCInput'+ i + '-group').
-				addClass('form-group');
-			
-			var lbl = $('<label></label>').
-				attr('for', fieldId).
-				text(rpcParm.name);
-				
-			var inputField = $('<input></input>').
-							addClass('form-control').
-							attr('id', fieldId).
-							attr('name', fieldId).
-							attr('type', 'text').
-							attr('data-toggle','popover').	
-							attr('data-content', rpcParm.description).		
-							text(rpcParm.name);
-
-			param.append(lbl).append(inputField);
-		} else if (rpcParm.type === 'LIST') {
-			var param = $('<div></div>')
-						.attr('id', fieldId + '-group')
-						.attr('name', fieldId + '-group')
-						.addClass('form-group');
-								
-			param.append( $('<label></label>')
-						.attr('for', fieldId + '-list')
-						.text(rpcParm.name));
-						
-			param.append(' ').append($('<button type="button" />')			// Add item button
-						.attr('data-field-id', fieldId)
-						.attr('data-content-parent', rpcParm.description)
-						.attr('onClick','onAddListItem($(this))')
-						.addClass('btn btn-default')
-						.addClass('item-add')						
-						.text('Add item'));
-						
-											
-			param.append( $('<ul></ul>')
-						.addClass('list-group')
-						.attr('id', fieldId + '-list')
-						.attr('data-id-counter', 0)); 								
-		}
-			
-		inputParams.append(param);
-
- 	}; 
-	
-	$('#RPCTesterParams').replaceWith(inputParams);
-	$('[data-toggle="popover"]').popover({trigger: 'focus','placement': 'auto'});		// initialize pop-over
-	document.getElementById('RPCTesterResult').innerHTML = '';
-	
-	$('#RPCTestForm').modal('show');
-};
 	
 // return formatted HTML RPC details
 var renderRPCDetails = function(rpc) {
