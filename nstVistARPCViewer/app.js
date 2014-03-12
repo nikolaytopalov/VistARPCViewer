@@ -213,13 +213,10 @@ EWD.application = {
 		'getRPCDetails' : function(messageObj) {		// process and display RPC details
 				// format the RPC detail html
 				currentRPC = messageObj.message;
-				var x =document.getElementById('RPCDetailName');
 				document.getElementById('RPCDetailName').innerHTML = currentRPC.name;
 				document.getElementById('RPCDetailContent').innerHTML = renderRPCDetails(currentRPC);	
 				showPane('RPC_container');
-/* 				document.getElementById("RoutineDetailPane").style.display = 'none';
-				document.getElementById("RPCDetailPane").style.display = 'inline';			
- */		},
+		},
 		
 		'getRoutine' : function(messageObj) {	// process and display a routine
 				// format the routine detail html			
