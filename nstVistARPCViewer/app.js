@@ -67,6 +67,7 @@ EWD.application = {
 											attr('id', fieldId).
 											attr('name', fieldId).
 											attr('type', 'text').
+											attr('maxlength',rpcParm.maximumLength).
 											attr('data-toggle','popover').	
 											attr('data-content', rpcParm.description).		
 											text(rpcParm.name);
@@ -95,7 +96,26 @@ EWD.application = {
 										.addClass('list-group')
 										.attr('id', fieldId + '-list')
 										.attr('data-id-counter', 0)); 								
-						}
+						} else if (rpcParm.type === 'WORD PROCESSING') {
+							var param = $('<div></div>').
+								attr('id','RPCInput'+ i + '-group').
+								addClass('form-group');
+							
+							var lbl = $('<label></label>').
+								attr('for', fieldId).
+								text(rpcParm.name);
+								
+							var inputField = $('<textarea></textarea>').
+											addClass('form-control').
+											attr('id', fieldId).
+											attr('name', fieldId).
+											attr('rows', 3).
+											attr('maxlength',rpcParm.maximumLength).
+											attr('data-toggle','popover').	
+											attr('data-content', rpcParm.description);
+
+							param.append(lbl).append(inputField);						
+						};
 							
 						inputParams.append(param);
 
@@ -156,7 +176,9 @@ EWD.application = {
 								itemValue = $('#' + listItems[index].id + '-item-value').val();
 								rpc.input[i].value[itemSubscript] = itemValue;
 							}
-						} 
+						} else if (rpcInputParam.type === 'WORD PROCESSING') {
+							rpc.input[i].value = $('#RPCInput' + i).val().split('\n');
+						}  
 						else {
 							rpc.input[i].value = $('#RPCInput' + i).val();
 						};

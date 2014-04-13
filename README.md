@@ -1,6 +1,8 @@
 VistARPCViewer
 ==============
 
+VistARPCViewer is already part of the VistAViewer. Left for reference only.
+
 With VistA RPC Viewer you can:
 
  - list RPCs
